@@ -13,7 +13,6 @@ export interface AnalysisResult {
 
 export interface AnalyzeRequest {
   jobRole: string;
-  embedToken: string;
 }
 
 export interface AnalyzeResponse {

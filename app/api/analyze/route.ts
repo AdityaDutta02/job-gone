@@ -61,31 +61,21 @@ You MUST respond with valid JSON matching this exact schema:
 }`;
 
 export async function POST(request: NextRequest) {
-  const body = (await request.json()) as {
-    jobRole?: string;
-    embedToken?: string;
-  };
-  const { jobRole, embedToken } = body;
-
-  if (!embedToken) {
-    return NextResponse.json({ error: "Missing embed token" }, { status: 401 });
-  }
+  const body = (await request.json()) as { jobRole?: string };
+  const { jobRole } = body;
 
   if (!jobRole || jobRole.trim().length === 0) {
     return NextResponse.json({ error: "Missing job role" }, { status: 400 });
   }
 
   try {
-    const responseText = await callGateway(
-      [
-        { role: "system", content: SYSTEM_PROMPT },
-        {
-          role: "user",
-          content: `Analyze this job role: "${jobRole.trim()}"`,
-        },
-      ],
-      embedToken
-    );
+    const responseText = await callGateway([
+      { role: "system", content: SYSTEM_PROMPT },
+      {
+        role: "user",
+        content: `Analyze this job role: "${jobRole.trim()}"`,
+      },
+    ]);
 
     const result: AnalysisResult = JSON.parse(responseText);
 

@@ -2,7 +2,6 @@
 
 import { useState } from "react";
 import { AnimatePresence } from "framer-motion";
-import { useEmbedToken } from "@/hooks/use-embed-token";
 import { JobInput } from "@/components/job-input";
 import { LoadingReveal } from "@/components/loading-reveal";
 import { ResultDisplay } from "@/components/result-display";
@@ -11,19 +10,12 @@ import type { AnalysisResult, AnalyzeResponse } from "@/lib/types";
 type AppState = "input" | "loading" | "result" | "error";
 
 export default function HomePage() {
-  const embedToken = useEmbedToken();
   const [state, setState] = useState<AppState>("input");
   const [result, setResult] = useState<AnalysisResult | null>(null);
   const [jobRole, setJobRole] = useState("");
   const [error, setError] = useState("");
 
   async function handleSubmit(role: string) {
-    if (!embedToken) {
-      setError("Connecting to AI service... Please try again in a moment.");
-      setState("error");
-      return;
-    }
-
     setJobRole(role);
     setState("loading");
     setError("");
@@ -32,7 +24,7 @@ export default function HomePage() {
       const res = await fetch("/api/analyze", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ jobRole: role, embedToken }),
+        body: JSON.stringify({ jobRole: role }),
       });
 
       const data: AnalyzeResponse = await res.json();

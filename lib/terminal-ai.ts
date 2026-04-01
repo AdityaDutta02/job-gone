@@ -6,20 +6,24 @@ function getGatewayUrl(): string {
   return url;
 }
 
-export async function callGateway(
-  messages: { role: string; content: string }[],
-  embedToken: string
-): Promise<string> {
-  if (!embedToken) {
-    throw new Error("Missing embed token");
+function getAppId(): string {
+  const appId = process.env.TERMINAL_AI_APP_ID;
+  if (!appId) {
+    throw new Error("TERMINAL_AI_APP_ID environment variable is required");
   }
+  return appId;
+}
 
+export async function callGateway(
+  messages: { role: string; content: string }[]
+): Promise<string> {
   const gatewayUrl = getGatewayUrl();
+  const appId = getAppId();
 
   const res = await fetch(`${gatewayUrl}/v1/chat/completions`, {
     method: "POST",
     headers: {
-      Authorization: `Bearer ${embedToken}`,
+      Authorization: `Bearer ${appId}`,
       "Content-Type": "application/json",
     },
     body: JSON.stringify({
@@ -31,7 +35,7 @@ export async function callGateway(
   });
 
   if (res.status === 401) {
-    throw new Error("Session expired. Please refresh the page.");
+    throw new Error("AI service authentication failed. Please contact support.");
   }
 
   if (!res.ok) {
