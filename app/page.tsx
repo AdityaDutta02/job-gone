@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { AnimatePresence } from "framer-motion";
+import { useEmbedToken } from "@/hooks/use-embed-token";
 import { JobInput } from "@/components/job-input";
 import { LoadingReveal } from "@/components/loading-reveal";
 import { ResultDisplay } from "@/components/result-display";
@@ -10,12 +11,19 @@ import type { AnalysisResult, AnalyzeResponse } from "@/lib/types";
 type AppState = "input" | "loading" | "result" | "error";
 
 export default function HomePage() {
+  const embedToken = useEmbedToken();
   const [state, setState] = useState<AppState>("input");
   const [result, setResult] = useState<AnalysisResult | null>(null);
   const [jobRole, setJobRole] = useState("");
   const [error, setError] = useState("");
 
   async function handleSubmit(role: string) {
+    if (!embedToken) {
+      setError("Waiting for authentication token from Terminal AI viewer. The token is delivered via postMessage but never arrived. See issue details below.");
+      setState("error");
+      return;
+    }
+
     setJobRole(role);
     setState("loading");
     setError("");
@@ -24,7 +32,7 @@ export default function HomePage() {
       const res = await fetch("/api/analyze", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ jobRole: role }),
+        body: JSON.stringify({ jobRole: role, embedToken }),
       });
 
       const data: AnalyzeResponse = await res.json();

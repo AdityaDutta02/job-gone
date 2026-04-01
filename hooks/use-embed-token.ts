@@ -16,8 +16,7 @@ export function useEmbedToken(): string | null {
     }
     window.addEventListener("message", handleMessage);
 
-    // Request the token from the parent iframe (Terminal AI viewer shell)
-    // in case it was sent before we started listening
+    // Request token re-delivery in case it was sent before mount
     if (window.parent !== window) {
       window.parent.postMessage({ type: "TERMINAL_AI_READY" }, "*");
     }
