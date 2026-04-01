@@ -18,6 +18,12 @@ export default function HomePage() {
   const [error, setError] = useState("");
 
   async function handleSubmit(role: string) {
+    if (!embedToken) {
+      setError("Connecting to AI service... Please try again in a moment.");
+      setState("error");
+      return;
+    }
+
     setJobRole(role);
     setState("loading");
     setError("");

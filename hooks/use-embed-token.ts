@@ -15,6 +15,13 @@ export function useEmbedToken(): string | null {
       }
     }
     window.addEventListener("message", handleMessage);
+
+    // Request the token from the parent iframe (Terminal AI viewer shell)
+    // in case it was sent before we started listening
+    if (window.parent !== window) {
+      window.parent.postMessage({ type: "TERMINAL_AI_READY" }, "*");
+    }
+
     return () => window.removeEventListener("message", handleMessage);
   }, []);
 
