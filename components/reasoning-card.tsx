@@ -1,7 +1,6 @@
 "use client";
 
 import { motion } from "framer-motion";
-import { Card, CardContent } from "@/components/ui/card";
 import { AlertTriangle, TrendingUp, Bot } from "lucide-react";
 import type { ReasoningPoint } from "@/lib/types";
 
@@ -28,27 +27,18 @@ export function ReasoningCard({ point, index }: ReasoningCardProps) {
 
   return (
     <motion.div
-      initial={{ opacity: 0, y: 20 }}
+      initial={{ opacity: 0, y: 14 }}
       animate={{ opacity: 1, y: 0 }}
-      transition={{ duration: 0.5, delay: 0.8 + index * 0.2 }}
+      transition={{ duration: 0.4, delay: 0.45 + index * 0.12 }}
+      className="h-full rounded-2xl bg-white border border-zinc-200/80 p-4 shadow-[0_2px_16px_-12px_rgba(9,9,11,0.2)] hover:shadow-[0_6px_24px_-12px_rgba(9,9,11,0.25)] transition-shadow"
     >
-      <Card className="border-border/40 shadow-sm hover:shadow-md transition-shadow duration-200">
-        <CardContent className="flex gap-4 p-5">
-          <div
-            className={`shrink-0 w-10 h-10 rounded-lg flex items-center justify-center ${colorClass}`}
-          >
-            <Icon className="w-5 h-5" />
-          </div>
-          <div className="space-y-1">
-            <h3 className="font-semibold text-foreground text-sm">
-              {point.title}
-            </h3>
-            <p className="text-muted-foreground text-sm leading-relaxed">
-              {point.text}
-            </p>
-          </div>
-        </CardContent>
-      </Card>
+      <div
+        className={`w-9 h-9 rounded-lg flex items-center justify-center mb-3 ${colorClass}`}
+      >
+        <Icon className="w-4 h-4" />
+      </div>
+      <h3 className="font-semibold text-zinc-900 text-sm mb-1">{point.title}</h3>
+      <p className="text-zinc-500 text-[13px] leading-relaxed">{point.text}</p>
     </motion.div>
   );
 }

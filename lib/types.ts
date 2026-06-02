@@ -15,7 +15,11 @@ export interface AnalyzeRequest {
   jobRole: string;
 }
 
-export interface AnalyzeResponse {
-  result?: AnalysisResult;
-  error?: string;
-}
+/**
+ * What the AI returns (and what /api/analyze forwards). Either a valid
+ * analysis, a rejection with a fun quip, or a transport error.
+ */
+export type AnalyzeResponse =
+  | { valid: true; result: AnalysisResult }
+  | { valid: false; quip: string }
+  | { error: string; code?: string };
