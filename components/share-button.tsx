@@ -2,7 +2,7 @@
 
 import { useState, useCallback } from "react";
 import { Button } from "@/components/ui/button";
-import { Share2, Check, Download } from "lucide-react";
+import { Share2, Check, Loader2 } from "lucide-react";
 import type { AnalysisResult } from "@/lib/types";
 
 interface ShareButtonProps {
@@ -10,65 +10,87 @@ interface ShareButtonProps {
   jobRole: string;
 }
 
+function buildCardUrl(result: AnalysisResult, jobRole: string): string {
+  const params = new URLSearchParams({
+    role: jobRole,
+    score: String(result.riskScore),
+    verdict: result.verdict,
+    timeline: result.timelineRange,
+    r1: result.reasoning[0]?.text ?? "",
+    r2: result.reasoning[1]?.text ?? "",
+    r3: result.reasoning[2]?.text ?? "",
+  });
+  return `/api/card?${params.toString()}`;
+}
+
+function buildSummary(result: AnalysisResult, jobRole: string): string {
+  return [
+    `Congrats 🎉 — ${jobRole} is ${result.riskScore}% automatable (${result.verdict}).`,
+    `AI handles most of it in ~${result.timelineRange}.`,
+    `Find your number at Job Gone.`,
+  ].join(" ");
+}
+
 export function ShareButton({ result, jobRole }: ShareButtonProps) {
-  const [copied, setCopied] = useState(false);
+  const [status, setStatus] = useState<"idle" | "working" | "done">("idle");
 
-  const handleCopy = useCallback(async () => {
-    const text = [
-      `AI Job Risk Analysis: ${jobRole}`,
-      `Risk Score: ${result.riskScore}% (${result.verdict})`,
-      `Timeline: ${result.timelineRange}`,
-      "",
-      ...result.reasoning.map((r) => `${r.title}: ${r.text}`),
-      "",
-      "Analyze your job at Job Gone",
-    ].join("\n");
+  const handleShare = useCallback(async () => {
+    setStatus("working");
+    const fileName = `job-gone-${jobRole.toLowerCase().replace(/\s+/g, "-")}.png`;
+    const summary = buildSummary(result, jobRole);
 
-    await navigator.clipboard.writeText(text);
-    setCopied(true);
-    setTimeout(() => setCopied(false), 2000);
+    try {
+      const res = await fetch(buildCardUrl(result, jobRole));
+      if (!res.ok) throw new Error("card render failed");
+      const blob = await res.blob();
+      const file = new File([blob], fileName, { type: "image/png" });
+
+      // Mobile: native share sheet with the image.
+      const nav = navigator as Navigator & {
+        canShare?: (data: { files: File[] }) => boolean;
+      };
+      if (nav.canShare?.({ files: [file] })) {
+        await navigator.share({ files: [file], text: summary, title: "Job Gone" });
+        setStatus("done");
+        setTimeout(() => setStatus("idle"), 2000);
+        return;
+      }
+
+      // Desktop: download the PNG.
+      const url = URL.createObjectURL(blob);
+      const link = document.createElement("a");
+      link.href = url;
+      link.download = fileName;
+      link.click();
+      URL.revokeObjectURL(url);
+      setStatus("done");
+      setTimeout(() => setStatus("idle"), 2000);
+    } catch {
+      // Last resort: copy a text summary.
+      try {
+        await navigator.clipboard.writeText(summary);
+      } catch {
+        /* clipboard blocked — nothing more we can do */
+      }
+      setStatus("done");
+      setTimeout(() => setStatus("idle"), 2000);
+    }
   }, [result, jobRole]);
 
-  const handleDownload = useCallback(async () => {
-    const el = document.getElementById("result-card");
-    if (!el) return;
-
-    const html2canvas = (await import("html2canvas")).default;
-    const canvas = await html2canvas(el, {
-      backgroundColor: "#FAFAFA",
-      scale: 2,
-    });
-
-    const link = document.createElement("a");
-    link.download = `job-gone-${jobRole.toLowerCase().replace(/\s+/g, "-")}.png`;
-    link.href = canvas.toDataURL("image/png");
-    link.click();
-  }, [jobRole]);
-
   return (
-    <div className="flex gap-2">
-      <Button
-        variant="outline"
-        size="sm"
-        onClick={handleCopy}
-        className="gap-2"
-      >
-        {copied ? (
-          <Check className="w-4 h-4 text-green-500" />
-        ) : (
-          <Share2 className="w-4 h-4" />
-        )}
-        {copied ? "Copied!" : "Copy Result"}
-      </Button>
-      <Button
-        variant="outline"
-        size="sm"
-        onClick={handleDownload}
-        className="gap-2"
-      >
-        <Download className="w-4 h-4" />
-        Save Image
-      </Button>
-    </div>
+    <Button
+      onClick={handleShare}
+      disabled={status === "working"}
+      className="h-11 px-6 gap-2 rounded-full bg-zinc-900 hover:bg-zinc-800 text-white font-semibold shadow-sm"
+    >
+      {status === "working" ? (
+        <Loader2 className="w-4 h-4 animate-spin" />
+      ) : status === "done" ? (
+        <Check className="w-4 h-4" />
+      ) : (
+        <Share2 className="w-4 h-4" />
+      )}
+      {status === "done" ? "Shared!" : "Share your doom"}
+    </Button>
   );
 }

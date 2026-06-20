@@ -2,7 +2,6 @@
 
 import { useEffect, useState } from "react";
 import { motion } from "framer-motion";
-import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { ReasoningCard } from "@/components/reasoning-card";
 import { ShareButton } from "@/components/share-button";
@@ -15,24 +14,38 @@ interface ResultDisplayProps {
   onReset: () => void;
 }
 
-function getVerdictColor(score: number): string {
-  if (score < 40) return "#22C55E";
-  if (score < 70) return "#EAB308";
-  return "#FF3B30";
-}
-
-function getVerdictBg(score: number): string {
-  if (score < 40) return "bg-green-50 text-green-700 border-green-200";
-  if (score < 70) return "bg-yellow-50 text-yellow-700 border-yellow-200";
-  return "bg-red-50 text-red-700 border-red-200";
+function riskTheme(score: number): {
+  accent: string;
+  ring: string;
+  chip: string;
+} {
+  if (score < 40) {
+    return {
+      accent: "#10b981",
+      ring: "#10b981",
+      chip: "bg-emerald-50 text-emerald-700 border-emerald-200",
+    };
+  }
+  if (score < 70) {
+    return {
+      accent: "#f59e0b",
+      ring: "#f59e0b",
+      chip: "bg-amber-50 text-amber-700 border-amber-200",
+    };
+  }
+  return {
+    accent: "#f43f5e",
+    ring: "#f43f5e",
+    chip: "bg-rose-50 text-rose-700 border-rose-200",
+  };
 }
 
 function AnimatedCounter({ target }: { target: number }) {
   const [count, setCount] = useState(0);
 
   useEffect(() => {
-    const duration = 1500;
-    const steps = 60;
+    const duration = 1200;
+    const steps = 48;
     const increment = target / steps;
     let current = 0;
     const timer = setInterval(() => {
@@ -51,92 +64,98 @@ function AnimatedCounter({ target }: { target: number }) {
 }
 
 export function ResultDisplay({ result, jobRole, onReset }: ResultDisplayProps) {
-  const color = getVerdictColor(result.riskScore);
+  const { accent, ring, chip } = riskTheme(result.riskScore);
 
   return (
     <motion.div
       initial={{ opacity: 0 }}
       animate={{ opacity: 1 }}
       exit={{ opacity: 0 }}
-      className="w-full max-w-xl mx-auto flex flex-col items-center gap-6"
+      className="w-full max-w-3xl mx-auto flex flex-col items-center gap-6"
     >
-      <div id="result-card" className="w-full space-y-6 p-6 rounded-2xl bg-background">
-        <motion.div
-          initial={{ opacity: 0, scale: 0.8 }}
-          animate={{ opacity: 1, scale: 1 }}
-          transition={{ duration: 0.5 }}
-          className="text-center space-y-3"
+      <div className="flex items-center gap-2.5">
+        <span className="w-3.5 h-3.5 rounded-[4px] bg-zinc-900 rotate-45" />
+        <span className="text-xs font-bold tracking-widest text-zinc-900 uppercase">
+          Job Gone
+        </span>
+      </div>
+
+      {/* Score row */}
+      <motion.div
+        initial={{ opacity: 0, scale: 0.94 }}
+        animate={{ opacity: 1, scale: 1 }}
+        transition={{ duration: 0.45 }}
+        className="flex flex-col sm:flex-row items-center gap-5 sm:gap-8"
+      >
+        <div
+          className="relative grid place-items-center w-36 h-36 rounded-full shrink-0"
+          style={{
+            border: `10px solid ${ring}`,
+            boxShadow: `0 20px 50px -20px ${accent}80`,
+          }}
         >
-          <p className="text-sm text-muted-foreground font-medium uppercase tracking-wider">
+          <span
+            className="text-5xl font-extrabold tabular-nums leading-none"
+            style={{ color: accent }}
+          >
+            <AnimatedCounter target={result.riskScore} />
+          </span>
+          <span
+            className="text-[10px] font-bold tracking-widest mt-1"
+            style={{ color: accent }}
+          >
+            % AT RISK
+          </span>
+        </div>
+
+        <div className="text-center sm:text-left space-y-2">
+          <p className="text-sm font-medium uppercase tracking-wider text-zinc-400">
             {jobRole}
           </p>
-
-          <div className="flex items-baseline justify-center gap-1">
-            <span
-              className="text-7xl sm:text-8xl font-black tabular-nums"
-              style={{ color }}
-            >
-              <AnimatedCounter target={result.riskScore} />
-            </span>
-            <span
-              className="text-3xl font-bold"
-              style={{ color }}
-            >
-              %
-            </span>
-          </div>
-
-          <Badge
-            variant="outline"
-            className={`text-sm px-3 py-1 font-semibold ${getVerdictBg(result.riskScore)}`}
+          <span
+            className={`inline-block text-sm px-3 py-1 rounded-full border font-semibold ${chip}`}
           >
             {result.verdict}
-          </Badge>
-        </motion.div>
-
-        <motion.div
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
-          transition={{ delay: 0.4, duration: 0.5 }}
-          className="text-center"
-        >
-          <p className="text-lg text-foreground">
-            AI could handle most of this role in{" "}
-            <span className="font-bold" style={{ color }}>
+          </span>
+          <p className="text-lg text-zinc-900">
+            Gone in{" "}
+            <span className="font-bold" style={{ color: accent }}>
               ~{result.timelineRange}
             </span>
           </p>
-        </motion.div>
-
-        <div className="space-y-3">
-          {result.reasoning.map((point, i) => (
-            <ReasoningCard key={point.title} point={point} index={i} />
-          ))}
         </div>
+      </motion.div>
 
-        <motion.p
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
-          transition={{ delay: 1.6 }}
-          className="text-[10px] text-muted-foreground/50 text-center"
-        >
-          Sources: Anthropic Economic Index, McKinsey Global Institute, PwC
-          Global AI Study, WEF Future of Jobs Report
-        </motion.p>
+      {/* Reasoning — 3 columns on desktop, stacked on mobile */}
+      <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 w-full">
+        {result.reasoning.map((point, i) => (
+          <ReasoningCard key={point.title} point={point} index={i} />
+        ))}
       </div>
 
+      {/* Actions */}
       <motion.div
-        initial={{ opacity: 0, y: 10 }}
+        initial={{ opacity: 0, y: 8 }}
         animate={{ opacity: 1, y: 0 }}
-        transition={{ delay: 1.8 }}
+        transition={{ delay: 1, duration: 0.4 }}
         className="flex flex-col sm:flex-row items-center gap-3"
       >
         <ShareButton result={result} jobRole={jobRole} />
-        <Button variant="ghost" size="sm" onClick={onReset} className="gap-2">
+        <Button
+          variant="ghost"
+          size="sm"
+          onClick={onReset}
+          className="gap-2 rounded-full text-zinc-500 hover:text-zinc-900"
+        >
           <RotateCcw className="w-4 h-4" />
-          Try Another Role
+          Try another
         </Button>
       </motion.div>
+
+      <p className="text-[10px] text-zinc-400 text-center max-w-md">
+        Sources: Anthropic Economic Index · McKinsey Global Institute · PwC
+        Global AI Study · WEF Future of Jobs
+      </p>
     </motion.div>
   );
 }

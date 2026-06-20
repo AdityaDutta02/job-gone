@@ -29,13 +29,13 @@ export function LoadingReveal() {
     >
       <div className="relative flex items-center justify-center">
         <motion.div
-          className="w-20 h-20 rounded-full border-4 border-[#FF3B30]/20"
-          style={{ borderTopColor: "#FF3B30" }}
+          className="w-20 h-20 rounded-full border-4 border-zinc-200"
+          style={{ borderTopColor: "#18181b" }}
           animate={{ rotate: 360 }}
           transition={{ duration: 1, repeat: Infinity, ease: "linear" }}
         />
         <motion.div
-          className="absolute w-10 h-10 rounded-full bg-[#FF3B30]/10"
+          className="absolute w-10 h-10 rounded-full bg-zinc-900/5"
           animate={{ scale: [1, 1.4, 1] }}
           transition={{ duration: 1.5, repeat: Infinity }}
         />
@@ -48,7 +48,7 @@ export function LoadingReveal() {
           animate={{ opacity: 1, y: 0 }}
           exit={{ opacity: 0, y: -10 }}
           transition={{ duration: 0.3 }}
-          className="text-muted-foreground text-lg font-medium"
+          className="text-zinc-500 text-lg font-medium"
         >
           {LOADING_MESSAGES[messageIndex]}
         </motion.p>
